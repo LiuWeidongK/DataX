@@ -26,7 +26,7 @@
                 "class": "com.alibaba.datax.core.transport.channel.memory.MemoryChannel",
                 "speed": {
                     "byte": -1,
-                    "record": -1
+                    "record": 100
                 },
                 "flowControlInterval": 20,
                 "capacity": 512,

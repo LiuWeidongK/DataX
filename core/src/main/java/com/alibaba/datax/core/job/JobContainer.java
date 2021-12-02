@@ -28,6 +28,7 @@ import com.alibaba.datax.core.util.container.CoreConstant;
 import com.alibaba.datax.core.util.container.LoadUtil;
 import com.alibaba.datax.dataxservice.face.domain.enums.ExecuteMode;
 import com.alibaba.fastjson.JSON;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -96,12 +97,26 @@ public class JobContainer extends AbstractContainer {
     public void start() {
         LOG.info("DataX jobContainer starts job.");
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            destroy();
+            endTimeStamp = System.currentTimeMillis();
+            //最后打印cpu的平均消耗，GC的统计
+            VMInfo vmInfo = VMInfo.getVmInfo();
+            if (vmInfo != null) {
+                vmInfo.getDelta(false);
+                LOG.info(vmInfo.totalString());
+            }
+
+            LOG.info(PerfTrace.getInstance().summarizeNoException());
+            logStatistics();
+        }));
+
         boolean hasException = false;
         boolean isDryRun = false;
         try {
             this.startTimeStamp = System.currentTimeMillis();
             isDryRun = configuration.getBool(CoreConstant.DATAX_JOB_SETTING_DRYRUN, false);
-            if(isDryRun) {
+            if (isDryRun) {
                 LOG.info("jobContainer starts to do preCheck ...");
                 this.preCheck();
             } else {
@@ -162,7 +177,7 @@ public class JobContainer extends AbstractContainer {
             throw DataXException.asDataXException(
                     FrameworkErrorCode.RUNTIME_ERROR, e);
         } finally {
-            if(!isDryRun) {
+            if (!isDryRun) {
 
                 this.destroy();
                 this.endTimeStamp = System.currentTimeMillis();
@@ -175,7 +190,7 @@ public class JobContainer extends AbstractContainer {
                     }
 
                     LOG.info(PerfTrace.getInstance().summarizeNoException());
-                    this.logStatistics();
+//                    this.logStatistics();
                 }
             }
         }
@@ -312,7 +327,7 @@ public class JobContainer extends AbstractContainer {
     private void preHandle() {
         String handlerPluginTypeStr = this.configuration.getString(
                 CoreConstant.DATAX_JOB_PREHANDLER_PLUGINTYPE);
-        if(!StringUtils.isNotEmpty(handlerPluginTypeStr)){
+        if (!StringUtils.isNotEmpty(handlerPluginTypeStr)) {
             return;
         }
         PluginType handlerPluginType;
@@ -348,7 +363,7 @@ public class JobContainer extends AbstractContainer {
         String handlerPluginTypeStr = this.configuration.getString(
                 CoreConstant.DATAX_JOB_POSTHANDLER_PLUGINTYPE);
 
-        if(!StringUtils.isNotEmpty(handlerPluginTypeStr)){
+        if (!StringUtils.isNotEmpty(handlerPluginTypeStr)) {
             return;
         }
         PluginType handlerPluginType;
@@ -398,7 +413,7 @@ public class JobContainer extends AbstractContainer {
 
         List<Configuration> transformerList = this.configuration.getListConfiguration(CoreConstant.DATAX_JOB_CONTENT_TRANSFORMER);
 
-        LOG.debug("transformer configuration: "+ JSON.toJSONString(transformerList));
+        LOG.debug("transformer configuration: " + JSON.toJSONString(transformerList));
         /**
          * 输入是reader和writer的parameter list，输出是content下面元素的list
          */
@@ -406,7 +421,7 @@ public class JobContainer extends AbstractContainer {
                 readerTaskConfigs, writerTaskConfigs, transformerList);
 
 
-        LOG.debug("contentConfig configuration: "+ JSON.toJSONString(contentConfig));
+        LOG.debug("contentConfig configuration: " + JSON.toJSONString(contentConfig));
 
         this.configuration.set(CoreConstant.DATAX_JOB_CONTENT, contentConfig);
 
@@ -460,8 +475,7 @@ public class JobContainer extends AbstractContainer {
         }
 
         // 取较小值
-        this.needChannelNumber = needChannelNumberByByte < needChannelNumberByRecord ?
-                needChannelNumberByByte : needChannelNumberByRecord;
+        this.needChannelNumber = Math.min(needChannelNumberByByte, needChannelNumberByRecord);
 
         // 如果从byte或record上设置了needChannelNumber则退出
         if (this.needChannelNumber < Integer.MAX_VALUE) {
@@ -513,7 +527,7 @@ public class JobContainer extends AbstractContainer {
         ExecuteMode executeMode = null;
         AbstractScheduler scheduler;
         try {
-        	executeMode = ExecuteMode.STANDALONE;
+            executeMode = ExecuteMode.STANDALONE;
             scheduler = initStandaloneScheduler(this.configuration);
 
             //设置 executeMode
@@ -642,8 +656,6 @@ public class JobContainer extends AbstractContainer {
                     communication.getLongCounter(CommunicationTool.TRANSFORMER_FILTER_RECORDS)
             ));
         }
-
-
     }
 
     /**
@@ -797,7 +809,7 @@ public class JobContainer extends AbstractContainer {
             taskConfig.set(CoreConstant.JOB_WRITER_PARAMETER,
                     writerTasksConfigs.get(i));
 
-            if(transformerConfigs!=null && transformerConfigs.size()>0){
+            if (transformerConfigs != null && transformerConfigs.size() > 0) {
                 taskConfig.set(CoreConstant.JOB_TRANSFORMER, transformerConfigs);
             }
 

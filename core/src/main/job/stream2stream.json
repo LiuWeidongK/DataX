@@ -1,0 +1,35 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "streamreader",
+          "parameter": {
+            "forever": true,
+            "hasMixupFunction": true,
+            "sliceRecordCount": 10,
+            "column": [
+              {
+                "type": "uuid",
+                "value": "ignore"
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "streamwriter",
+          "parameter": {
+            "encoding": "UTF-8",
+            "print": false
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 1,
+        "record": -1
+      }
+    }
+  }
+}

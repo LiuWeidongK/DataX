@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package com.alibaba.datax.protobuf;
+
+//import "google/protobuf/any.proto";
+//option java_multiple_files = true;
+
+message Buffer {
+
+  repeated ProtobufRecord buffer = 1;
+}
+
+message ProtobufRecord {
+
+  repeated ProtobufColumn columns = 1;
+  int32 byteSize = 2;
+  int32 memorySize = 3;
+}
+
+message ProtobufColumn {
+
+  ProtobufType type = 1;
+  bytes rawData = 2;
+  int32 byteSize = 3;
+
+  enum ProtobufType {
+    BAD = 0;
+    NULL = 1;
+    INT = 2;
+    LONG = 3;
+    DOUBLE = 4;
+    STRING = 5;
+    BOOL = 6;
+    DATE = 7;
+    BYTES = 8;
+  }
+}

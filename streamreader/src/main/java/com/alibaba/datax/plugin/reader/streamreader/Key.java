@@ -9,4 +9,5 @@ public class Key {
 
     public static final String SLICE_RECORD_COUNT = "sliceRecordCount";
 
+    public static final String IS_FOREVER = "forever";
 }
